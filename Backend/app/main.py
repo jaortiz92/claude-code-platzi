@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.db.base import engine, get_db
 from app.services.course_service import CourseService
+from app.services.rating_service import RatingService
+from app.schemas.course_rating import RatingCreate, RatingResponse, RatingSummary
 
 app = FastAPI(title=settings.project_name, version=settings.version)
 
@@ -13,6 +15,13 @@ def get_course_service(db: Session = Depends(get_db)) -> CourseService:
     Dependency to get CourseService instance
     """
     return CourseService(db)
+
+
+def get_rating_service(db: Session = Depends(get_db)) -> RatingService:
+    """
+    Dependency to get RatingService instance
+    """
+    return RatingService(db)
 
 
 @app.get("/")
@@ -75,3 +84,54 @@ def get_course_by_slug(slug: str, course_service: CourseService = Depends(get_co
         raise HTTPException(status_code=404, detail="Course not found")
     
     return course
+
+
+@app.get("/courses/{slug}/rating", response_model=RatingSummary)
+def get_course_rating(
+    slug: str,
+    user_id: str | None = Query(default=None),
+    rating_service: RatingService = Depends(get_rating_service),
+):
+    """
+    Get rating summary for a course.
+    Returns average, count, and user_rating (if user_id provided).
+    """
+    summary = rating_service.get_rating_summary(slug, user_id)
+    if summary is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return summary
+
+
+@app.post("/courses/{slug}/rating", response_model=RatingResponse, status_code=201)
+def create_or_update_rating(
+    slug: str,
+    body: RatingCreate,
+    rating_service: RatingService = Depends(get_rating_service),
+):
+    """
+    Create or update a rating for a course.
+    One rating per user (upsert).
+    """
+    try:
+        result = rating_service.upsert_rating(slug, body.user_id, body.rating)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return result
+
+
+@app.delete("/courses/{slug}/rating")
+def delete_rating(
+    slug: str,
+    user_id: str = Query(...),
+    rating_service: RatingService = Depends(get_rating_service),
+):
+    """
+    Delete a user's rating for a course (soft-delete).
+    """
+    try:
+        deleted = rating_service.delete_rating(slug, user_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Rating not found")
+    return {"message": "Rating eliminado"}

@@ -155,81 +155,72 @@ teachers ──M:N──> courses ──1:N──> lessons
 
 ### Fase 1: Modelo y Migración
 
-1. Crear `Backend/app/models/course_rating.py`
-   - Heredar de `BaseModel`
-   - Campo `course_id` con FK a `courses.id`
-   - Campo `user_id` (String 100)
-   - Campo `rating` (Integer)
-   - `__table_args__` con CheckConstraint y UniqueConstraint
-   - Relationship `course` con `back_populates`
+- [x] Crear `Backend/app/models/course_rating.py`
+   - [x] Heredar de `BaseModel`
+   - [x] Campo `course_id` con FK a `courses.id`
+   - [x] Campo `user_id` (String 100)
+   - [x] Campo `rating` (Integer)
+   - [x] `__table_args__` con CheckConstraint y UniqueConstraint
+   - [x] Relationship `course` con `back_populates`
 
-2. Modificar `Backend/app/models/__init__.py`
-   - Agregar import de `CourseRating`
-   - Agregar a `__all__`
+- [x] Modificar `Backend/app/models/__init__.py`
+   - [x] Agregar import de `CourseRating`
+   - [x] Agregar a `__all__`
 
-3. Modificar `Backend/app/models/course.py`
-   - Agregar relationship `ratings = relationship("CourseRating", back_populates="course")`
+- [x] Modificar `Backend/app/models/course.py`
+   - [x] Agregar relationship `ratings = relationship("CourseRating", back_populates="course")`
 
-4. Crear migración Alembic
-   - Ejecutar `make create-migration` con mensaje "add course_ratings table"
-   - En la migración, crear partial unique index:
-     ```python
-     op.create_index(
-         'uq_course_ratings_active',
-         'course_ratings',
-         ['course_id', 'user_id'],
-         unique=True,
-         postgresql_where='deleted_at IS NULL'
-     )
-     ```
+- [x] Crear migración Alembic
+   - [x] Crear archivo `Backend/app/alembic/versions/a1b2c3d4e5f6_add_course_ratings_table.py`
+   - [x] Partial unique index `uq_course_ratings_active` con `postgresql_where='deleted_at IS NULL'`
 
-5. Ejecutar migración
-   - `make migrate`
+- [x] Ejecutar migración
+   - [x] `make migrate` ejecutado correctamente
 
 ### Fase 2: Schema y Servicio
 
-1. Crear directorio `Backend/app/schemas/`
-2. Crear `Backend/app/schemas/__init__.py` (vacío)
-3. Crear `Backend/app/schemas/course_rating.py`
-   - `RatingCreate` (user_id, rating con validación 1-5)
-   - `RatingResponse` (id, course_id, user_id, rating, created_at, updated_at)
-   - `RatingSummary` (average, count, user_rating nullable)
+- [x] Crear directorio `Backend/app/schemas/`
+- [x] Crear `Backend/app/schemas/__init__.py` (vacío)
+- [x] Crear `Backend/app/schemas/course_rating.py`
+   - [x] `RatingCreate` (user_id, rating con validación 1-5)
+   - [x] `RatingResponse` (id, course_id, user_id, rating, created_at, updated_at)
+   - [x] `RatingSummary` (average, count, user_rating nullable)
 
-4. Crear `Backend/app/services/rating_service.py`
-   - `get_rating_summary(slug, user_id=None)` → dict con average, count, user_rating
-   - `upsert_rating(slug, user_id, rating)` → dict con rating creado/actualizado
-   - `delete_rating(slug, user_id)` → bool
+- [x] Crear `Backend/app/services/rating_service.py`
+   - [x] `get_rating_summary(slug, user_id=None)` → dict con average, count, user_rating
+   - [x] `upsert_rating(slug, user_id, rating)` → dict con rating creado/actualizado
+   - [x] `delete_rating(slug, user_id)` → bool
 
-5. Modificar `Backend/app/services/course_service.py`
-   - En `get_course_by_slug()`, agregar campo `rating` al response
-   - Query de agregación: `func.avg()` y `func.count()` sobre `CourseRating`
+- [x] Modificar `Backend/app/services/course_service.py`
+   - [x] En `get_course_by_slug()`, agregar campo `rating` al response
+   - [x] Query de agregación: `func.avg()` y `func.count()` sobre `CourseRating`
 
 ### Fase 3: Endpoints
 
-1. Modificar `Backend/app/main.py`
-   - Importar `RatingService` y schemas
-   - Crear dependencia `get_rating_service`
-   - Agregar 3 endpoints:
-     - `GET /courses/{slug}/rating`
-     - `POST /courses/{slug}/rating` (status 201)
-     - `DELETE /courses/{slug}/rating`
+- [x] Modificar `Backend/app/main.py`
+   - [x] Importar `RatingService` y schemas
+   - [x] Crear dependencia `get_rating_service`
+   - [x] Agregar 3 endpoints:
+     - [x] `GET /courses/{slug}/rating`
+     - [x] `POST /courses/{slug}/rating` (status 201)
+     - [x] `DELETE /courses/{slug}/rating`
 
 ### Fase 4: Tests
 
-1. Modificar `Backend/app/test_main.py`
-   - Agregar fixture `mock_rating_service`
-   - Actualizar fixture `client` para incluir override de `get_rating_service`
-   - Agregar clase `TestRatingEndpoints`:
-     - `test_get_rating_summary_success`
-     - `test_get_rating_summary_no_user`
-     - `test_get_rating_summary_course_not_found`
-     - `test_create_rating_success`
-     - `test_update_existing_rating`
-     - `test_create_rating_invalid_rating_too_low` (422)
-     - `test_create_rating_invalid_rating_too_high` (422)
-     - `test_create_rating_course_not_found`
-     - `test_delete_rating_success`
-     - `test_delete_rating_not_found`
+- [x] Modificar `Backend/app/test_main.py`
+   - [x] Agregar fixture `mock_rating_service`
+   - [x] Actualizar fixture `client` para incluir override de `get_rating_service`
+   - [x] Agregar clase `TestRatingEndpoints`:
+     - [x] `test_get_rating_summary_success`
+     - [x] `test_get_rating_summary_no_user`
+     - [x] `test_get_rating_summary_course_not_found`
+     - [x] `test_create_rating_success`
+     - [x] `test_update_existing_rating`
+     - [x] `test_create_rating_invalid_rating_too_low` (422)
+     - [x] `test_create_rating_invalid_rating_too_high` (422)
+     - [x] `test_create_rating_course_not_found`
+     - [x] `test_delete_rating_success`
+     - [x] `test_delete_rating_not_found`
 
 ---
 
@@ -237,19 +228,19 @@ teachers ──M:N──> courses ──1:N──> lessons
 
 ### Archivos Nuevos (4)
 ```
-Backend/app/models/course_rating.py
-Backend/app/schemas/__init__.py
-Backend/app/schemas/course_rating.py
-Backend/app/services/rating_service.py
+[x] Backend/app/models/course_rating.py
+[x] Backend/app/schemas/__init__.py
+[x] Backend/app/schemas/course_rating.py
+[x] Backend/app/services/rating_service.py
 ```
 
 ### Archivos Modificados (5)
 ```
-Backend/app/models/__init__.py
-Backend/app/models/course.py
-Backend/app/services/course_service.py
-Backend/app/main.py
-Backend/app/test_main.py
+[x] Backend/app/models/__init__.py
+[x] Backend/app/models/course.py
+[x] Backend/app/services/course_service.py
+[x] Backend/app/main.py
+[x] Backend/app/test_main.py
 ```
 
 ---

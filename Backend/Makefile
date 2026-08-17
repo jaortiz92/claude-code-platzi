@@ -1,46 +1,58 @@
-.PHONY: start stop restart build logs clean migrate create-migration seed seed-fresh help
+.PHONY: start stop restart build logs clean migrate create-migration seed seed-fresh test help
 
 # Comando principal para iniciar el entorno de desarrollo
 start:
-	docker-compose up -d
+	docker compose up -d
 
 # Detener los contenedores
 stop:
-	docker-compose down
+	docker compose down
 
 # Reiniciar los contenedores
 restart:
-	docker-compose restart
+	docker compose restart
 
 # Construir las imágenes
 build:
-	docker-compose build
+	docker compose build
 
 # Ver los logs de los contenedores
 logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 # Limpiar contenedores, volúmenes e imágenes
 clean:
-	docker-compose down -v --rmi all --remove-orphans
+	docker compose down -v --rmi all --remove-orphans
 
 # Ejecutar migraciones de la base de datos
 migrate:
-	docker-compose exec api bash -c "cd /app && uv run alembic -c app/alembic.ini upgrade head"
+	docker compose exec api bash -c "cd /app && uv run alembic -c app/alembic.ini upgrade head"
 
 # Crear una nueva migración
 create-migration:
 	@read -p "Ingrese el mensaje para la migración: " message; \
-	docker-compose exec api bash -c "cd /app && uv run alembic -c app/alembic.ini revision --autogenerate -m \"$$message\""
+	docker compose exec api bash -c "cd /app && uv run alembic -c app/alembic.ini revision --autogenerate -m \"$$message\""
 
 # Ejecutar seed de datos
 seed:
-	docker-compose exec api bash -c "cd /app && uv run python -m app.db.seed"
+	docker compose exec api bash -c "cd /app && uv run python -m app.db.seed"
 
 # Limpiar y recrear datos de seed
 seed-fresh:
-	docker-compose exec api bash -c "cd /app && uv run python -m app.db.seed clear"
-	docker-compose exec api bash -c "cd /app && uv run python -m app.db.seed"
+	docker compose exec api bash -c "cd /app && uv run python -m app.db.seed clear"
+	docker compose exec api bash -c "cd /app && uv run python -m app.db.seed"
+
+# Ejecutar pruebas
+test:
+	docker compose exec api bash -c "cd /app && uv run pytest"
+
+# Ejecutar pruebas con verbose
+test-verbose:
+	docker compose exec api bash -c "cd /app && uv run pytest -v"
+
+# Ejecutar pruebas con cobertura
+test-cov:
+	docker compose exec api bash -c "cd /app && uv run pytest --cov=app --cov-report=term-missing"
 
 # Mostrar ayuda
 help:
@@ -55,6 +67,9 @@ help:
 	@echo "  make create-migration  - Crear una nueva migración"
 	@echo "  make seed              - Ejecutar seed de datos"
 	@echo "  make seed-fresh        - Limpiar y recrear datos de seed"
+	@echo "  make test              - Ejecutar pruebas"
+	@echo "  make test-verbose      - Ejecutar pruebas con verbose"
+	@echo "  make test-cov          - Ejecutar pruebas con cobertura"
 	@echo "  make help              - Mostrar esta ayuda"
 
 # Comando por defecto

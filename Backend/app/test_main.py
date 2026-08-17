@@ -1,8 +1,9 @@
 import pytest
 from unittest.mock import Mock
 from fastapi.testclient import TestClient
-from app.main import app, get_course_service
+from app.main import app, get_course_service, get_rating_service
 from app.services.course_service import CourseService
+from app.services.rating_service import RatingService
 
 
 # Mock data according to the contracts
@@ -54,14 +55,24 @@ def mock_course_service():
 
 
 @pytest.fixture
-def client(mock_course_service):
-    """Create test client with mocked CourseService dependency"""
+def mock_rating_service():
+    """Create a mock RatingService for testing"""
+    return Mock(spec=RatingService)
+
+
+@pytest.fixture
+def client(mock_course_service, mock_rating_service):
+    """Create test client with mocked CourseService and RatingService dependencies"""
     
     def get_mock_course_service():
         return mock_course_service
     
-    # Override the dependency
+    def get_mock_rating_service():
+        return mock_rating_service
+    
+    # Override dependencies
     app.dependency_overrides[get_course_service] = get_mock_course_service
+    app.dependency_overrides[get_rating_service] = get_mock_rating_service
     
     # Create test client
     client = TestClient(app)
@@ -276,4 +287,138 @@ class TestContractCompliance:
         assert course["name"] == "Curso de React"
         assert course["description"] == "Curso de React"
         assert course["thumbnail"] == "https://via.placeholder.com/150"
-        assert course["slug"] == "curso-de-react" 
+        assert course["slug"] == "curso-de-react"
+
+
+class TestRatingEndpoints:
+    """Tests for rating related endpoints"""
+
+    def test_get_rating_summary_success(self, client, mock_rating_service):
+        """Test GET /courses/{slug}/rating returns summary with user rating"""
+        mock_rating_service.get_rating_summary.return_value = {
+            "average": 4.5,
+            "count": 10,
+            "user_rating": 5,
+        }
+
+        response = client.get("/courses/curso-de-react/rating?user_id=anonymous_user")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["average"] == 4.5
+        assert data["count"] == 10
+        assert data["user_rating"] == 5
+        mock_rating_service.get_rating_summary.assert_called_once_with("curso-de-react", "anonymous_user")
+
+    def test_get_rating_summary_no_user(self, client, mock_rating_service):
+        """Test GET /courses/{slug}/rating without user_id returns null user_rating"""
+        mock_rating_service.get_rating_summary.return_value = {
+            "average": 4.0,
+            "count": 5,
+            "user_rating": None,
+        }
+
+        response = client.get("/courses/curso-de-react/rating")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["average"] == 4.0
+        assert data["count"] == 5
+        assert data["user_rating"] is None
+        mock_rating_service.get_rating_summary.assert_called_once_with("curso-de-react", None)
+
+    def test_get_rating_summary_course_not_found(self, client, mock_rating_service):
+        """Test GET /courses/{slug}/rating when course doesn't exist"""
+        mock_rating_service.get_rating_summary.return_value = None
+
+        response = client.get("/courses/nonexistent/rating")
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Course not found"}
+
+    def test_create_rating_success(self, client, mock_rating_service):
+        """Test POST /courses/{slug}/rating creates a new rating"""
+        mock_rating_service.upsert_rating.return_value = {
+            "id": 1,
+            "course_id": 1,
+            "user_id": "anonymous_user",
+            "rating": 5,
+            "created_at": "2026-08-13T10:00:00",
+            "updated_at": "2026-08-13T10:00:00",
+        }
+
+        response = client.post(
+            "/courses/curso-de-react/rating",
+            json={"user_id": "anonymous_user", "rating": 5},
+        )
+        assert response.status_code == 201
+
+        data = response.json()
+        assert data["id"] == 1
+        assert data["user_id"] == "anonymous_user"
+        assert data["rating"] == 5
+        mock_rating_service.upsert_rating.assert_called_once_with("curso-de-react", "anonymous_user", 5)
+
+    def test_update_existing_rating(self, client, mock_rating_service):
+        """Test POST /courses/{slug}/rating updates an existing rating"""
+        mock_rating_service.upsert_rating.return_value = {
+            "id": 1,
+            "course_id": 1,
+            "user_id": "anonymous_user",
+            "rating": 3,
+            "created_at": "2026-08-13T10:00:00",
+            "updated_at": "2026-08-13T11:00:00",
+        }
+
+        response = client.post(
+            "/courses/curso-de-react/rating",
+            json={"user_id": "anonymous_user", "rating": 3},
+        )
+        assert response.status_code == 201
+
+        data = response.json()
+        assert data["rating"] == 3
+        mock_rating_service.upsert_rating.assert_called_once_with("curso-de-react", "anonymous_user", 3)
+
+    def test_create_rating_invalid_rating_too_low(self, client, mock_rating_service):
+        """Test POST /courses/{slug}/rating with rating < 1 returns 422"""
+        response = client.post(
+            "/courses/curso-de-react/rating",
+            json={"user_id": "anonymous_user", "rating": 0},
+        )
+        assert response.status_code == 422
+
+    def test_create_rating_invalid_rating_too_high(self, client, mock_rating_service):
+        """Test POST /courses/{slug}/rating with rating > 5 returns 422"""
+        response = client.post(
+            "/courses/curso-de-react/rating",
+            json={"user_id": "anonymous_user", "rating": 6},
+        )
+        assert response.status_code == 422
+
+    def test_create_rating_course_not_found(self, client, mock_rating_service):
+        """Test POST /courses/{slug}/rating when course doesn't exist"""
+        mock_rating_service.upsert_rating.side_effect = ValueError("Course not found")
+
+        response = client.post(
+            "/courses/nonexistent/rating",
+            json={"user_id": "anonymous_user", "rating": 5},
+        )
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Course not found"}
+
+    def test_delete_rating_success(self, client, mock_rating_service):
+        """Test DELETE /courses/{slug}/rating deletes rating"""
+        mock_rating_service.delete_rating.return_value = True
+
+        response = client.delete("/courses/curso-de-react/rating?user_id=anonymous_user")
+        assert response.status_code == 200
+        assert response.json() == {"message": "Rating eliminado"}
+        mock_rating_service.delete_rating.assert_called_once_with("curso-de-react", "anonymous_user")
+
+    def test_delete_rating_not_found(self, client, mock_rating_service):
+        """Test DELETE /courses/{slug}/rating when rating doesn't exist"""
+        mock_rating_service.delete_rating.return_value = False
+
+        response = client.delete("/courses/curso-de-react/rating?user_id=anonymous_user")
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Rating not found"}

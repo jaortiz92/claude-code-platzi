@@ -19,6 +19,8 @@ services:
     volumes:
       - ./app:/app/app
       - ./specs:/app/specs
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./uv.lock:/app/uv.lock
     environment:
       DATABASE_URL: postgresql://platziflix_user:platziflix_password@db:5432/platziflix_db
     depends_on:
