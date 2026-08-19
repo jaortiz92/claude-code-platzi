@@ -1,3 +1,10 @@
+// Rating types
+export interface CourseRating {
+  average: number;
+  count: number;
+  userRating: number | null;
+}
+
 // Course types
 export interface Course {
   id: number;
@@ -6,6 +13,7 @@ export interface Course {
   duration: number;
   thumbnail: string;
   slug: string;
+  rating?: CourseRating;
 }
 
 // Class types

@@ -1,13 +1,17 @@
 import { FC } from "react";
 import Link from "next/link";
-import { CourseDetail } from "@/types";
+import { CourseDetail, CourseRating } from "@/types";
+import { StarRating } from "@/components/StarRating/StarRating";
+import { StarRatingInteractive } from "@/components/StarRatingInteractive/StarRatingInteractive";
 import styles from "./CourseDetail.module.scss";
 
 interface CourseDetailComponentProps {
   course: CourseDetail;
+  rating?: CourseRating;
+  slug: string;
 }
 
-export const CourseDetailComponent: FC<CourseDetailComponentProps> = ({ course }) => {
+export const CourseDetailComponent: FC<CourseDetailComponentProps> = ({ course, rating, slug }) => {
   const formatDuration = (duration: number) => {
     const hours = Math.floor(duration / 3600);
     const minutes = Math.floor((duration % 3600) / 60);
@@ -34,6 +38,15 @@ export const CourseDetailComponent: FC<CourseDetailComponentProps> = ({ course }
           <div className={styles.stats}>
             <span className={styles.duration}>Duración total: {formatDuration(totalDuration)}</span>
             <span className={styles.classCount}>{course.classes.length} clases</span>
+          </div>
+          <div className={styles.ratingSection}>
+            {rating && rating.count > 0 && (
+              <StarRating average={rating.average} count={rating.count} size="lg" />
+            )}
+            <StarRatingInteractive
+              slug={slug}
+              initialUserRating={rating?.userRating ?? null}
+            />
           </div>
         </div>
       </div>

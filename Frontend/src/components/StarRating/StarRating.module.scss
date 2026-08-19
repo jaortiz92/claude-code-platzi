@@ -1,0 +1,70 @@
+@import '../../styles/vars.scss';
+
+.starRating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star {
+  position: relative;
+  display: inline-flex;
+}
+
+.starIcon {
+  color: #d1d5db;
+  transition: color 0.15s;
+}
+
+.full .starIcon {
+  color: #fbbf24;
+}
+
+.half {
+  overflow: hidden;
+}
+
+.halfOverlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #d1d5db;
+  width: 50%;
+  overflow: hidden;
+  color: #fbbf24;
+}
+
+.count {
+  margin-left: 4px;
+  color: color('text-secondary');
+  font-weight: 600;
+}
+
+.sm {
+  .starIcon {
+    font-size: 0.875rem;
+  }
+  .count {
+    font-size: 0.75rem;
+  }
+}
+
+.md {
+  .starIcon {
+    font-size: 1.125rem;
+  }
+  .count {
+    font-size: 0.875rem;
+  }
+}
+
+.lg {
+  .starIcon {
+    font-size: 1.5rem;
+  }
+  .count {
+    font-size: 1rem;
+    margin-left: 6px;
+  }
+  gap: 3px;
+}

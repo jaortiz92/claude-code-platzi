@@ -119,6 +119,15 @@
   border: 1px solid color('light-gray');
 }
 
+.ratingSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid color('light-gray');
+}
+
 .classesSection {
   background: color('white');
   border-radius: 18px;

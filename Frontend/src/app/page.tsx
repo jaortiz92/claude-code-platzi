@@ -1,19 +1,29 @@
 import styles from "./page.module.scss";
 import { Course } from "@/types";
 import { Course as CourseComponent } from "@/components/Course/Course";
+import { getCourseRating } from "@/services/api";
 import Link from "next/link";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 async function getCourses(): Promise<Course[]> {
-  const res = await fetch("http://localhost:8000/courses", { cache: "no-store" });
+  const res = await fetch(`${API_BASE_URL}/courses`, { cache: "no-store" });
   if (!res.ok) {
     throw new Error("Failed to fetch courses");
   }
   const data = await res.json();
-  return data.data;
+  return data;
 }
 
 export default async function Home() {
   const courses = await getCourses();
+
+  const coursesWithRatings = await Promise.all(
+    courses.map(async (course) => {
+      const rating = await getCourseRating(course.slug);
+      return { ...course, rating };
+    })
+  );
 
   return (
     <div className={styles.page}>
@@ -29,7 +39,7 @@ export default async function Home() {
       {/* Grid de cursos */}
       <main className={styles.main}>
         <div className={styles.coursesGrid}>
-          {courses.map((course) => (
+          {coursesWithRatings.map((course) => (
             <Link href={`/course/${course.slug}`} key={course.id}>
               <CourseComponent
                 id={course.id}
@@ -37,6 +47,7 @@ export default async function Home() {
                 teacher={course.teacher}
                 duration={course.duration}
                 thumbnail={course.thumbnail}
+                rating={course.rating}
               />
             </Link>
           ))}

@@ -15,20 +15,15 @@ describe("Course Component", () => {
   it("renders course information correctly", () => {
     render(<Course {...mockCourse} />);
 
-    // Check if title is rendered
     expect(screen.getByText(mockCourse.title)).toBeDefined();
-
-    // Check if teacher information is rendered
     expect(screen.getByText(`Profesor: ${mockCourse.teacher}`)).toBeDefined();
-
-    // Check if duration is rendered
     expect(screen.getByText(`Duración: ${mockCourse.duration} minutos`)).toBeDefined();
   });
 
   it("renders thumbnail with correct alt text", () => {
     render(<Course {...mockCourse} />);
 
-    const thumbnail = screen.getByRole("img");
+    const thumbnail = screen.getByRole("img", { name: mockCourse.title });
     expect(thumbnail).toHaveAttribute("src", mockCourse.thumbnail);
     expect(thumbnail).toHaveAttribute("alt", mockCourse.title);
   });
@@ -36,14 +31,21 @@ describe("Course Component", () => {
   it("renders with correct structure", () => {
     const { container } = render(<Course {...mockCourse} />);
 
-    // Check if the main article exists
     expect(container.querySelector("article")).toBeDefined();
-
-    // Check if the thumbnail container exists
     expect(container.querySelector("div > img")).toBeDefined();
-
-    // Check if the course info section exists
     expect(container.querySelector("div > h2")).toBeDefined();
     expect(container.querySelector("div > p")).toBeDefined();
+  });
+
+  it("shows rating when provided", () => {
+    const rating = { average: 4.5, count: 10, userRating: null };
+    render(<Course {...mockCourse} rating={rating} />);
+    expect(screen.getByText("(10)")).toBeDefined();
+  });
+
+  it("does not show rating when count is 0", () => {
+    const rating = { average: 0, count: 0, userRating: null };
+    render(<Course {...mockCourse} rating={rating} />);
+    expect(screen.queryByText("(0)")).toBeNull();
   });
 });
