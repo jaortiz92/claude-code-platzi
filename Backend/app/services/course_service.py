@@ -18,20 +18,27 @@ class CourseService:
 
     def get_all_courses(self) -> List[Dict[str, Any]]:
         """
-        Get all courses with basic information (no teachers or lessons).
+        Get all courses with basic information including teacher names.
         
         Returns:
-            List of course dictionaries with: id, name, description, thumbnail, slug
+            List of course dictionaries with: id, title, description, thumbnail, slug, teacher, duration
         """
-        courses = self.db.query(Course).filter(Course.deleted_at.is_(None)).all()
+        courses = (
+            self.db.query(Course)
+            .options(joinedload(Course.teachers))
+            .filter(Course.deleted_at.is_(None))
+            .all()
+        )
         
         return [
             {
                 "id": course.id,
-                "name": course.name,
+                "title": course.name,
                 "description": course.description,
                 "thumbnail": course.thumbnail,
-                "slug": course.slug
+                "slug": course.slug,
+                "teacher": course.teachers[0].name if course.teachers else "",
+                "duration": 0,
             }
             for course in courses
         ]
@@ -74,10 +81,12 @@ class CourseService:
 
         return {
             "id": course.id,
-            "name": course.name,
+            "title": course.name,
             "description": course.description,
             "thumbnail": course.thumbnail,
             "slug": course.slug,
+            "teacher": course.teachers[0].name if course.teachers else "",
+            "duration": 0,
             "teacher_id": [teacher.id for teacher in course.teachers],
             "rating": {
                 "average": round(float(rating_result.average), 2) if rating_result.average else 0.0,
@@ -86,11 +95,48 @@ class CourseService:
             "classes": [
                 {
                     "id": lesson.id,
-                    "name": lesson.name,
+                    "title": lesson.name,
                     "description": lesson.description,
-                    "slug": lesson.slug
+                    "slug": lesson.slug,
+                    "video": lesson.video_url,
+                    "duration": 0,
                 }
                 for lesson in course.lessons
                 if lesson.deleted_at is None
             ]
-        } 
+        }
+
+    def get_class_by_id(self, course_slug: str, class_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Get a single class/lesson by ID within a course.
+        
+        Args:
+            course_slug: The course slug
+            class_id: The lesson ID
+            
+        Returns:
+            Lesson dictionary or None if not found
+        """
+        lesson = (
+            self.db.query(Lesson)
+            .join(Course, Lesson.course_id == Course.id)
+            .filter(
+                Course.slug == course_slug,
+                Lesson.id == class_id,
+                Lesson.deleted_at.is_(None),
+                Course.deleted_at.is_(None),
+            )
+            .first()
+        )
+        
+        if not lesson:
+            return None
+
+        return {
+            "id": lesson.id,
+            "title": lesson.name,
+            "description": lesson.description,
+            "slug": lesson.slug,
+            "video": lesson.video_url,
+            "duration": 0,
+        }

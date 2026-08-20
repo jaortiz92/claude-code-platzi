@@ -95,6 +95,23 @@ def get_course_by_slug(slug: str, course_service: CourseService = Depends(get_co
     return course
 
 
+@app.get("/courses/{slug}/classes/{class_id}")
+def get_class_by_slug(
+    slug: str,
+    class_id: int,
+    course_service: CourseService = Depends(get_course_service),
+) -> dict:
+    """
+    Get a single class/lesson by ID within a course.
+    """
+    lesson = course_service.get_class_by_id(slug, class_id)
+
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Class not found")
+
+    return lesson
+
+
 @app.get("/courses/{slug}/rating", response_model=RatingSummary)
 def get_course_rating(
     slug: str,

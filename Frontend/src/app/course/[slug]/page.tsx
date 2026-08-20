@@ -28,18 +28,20 @@ async function getCourseData(slug: string): Promise<CourseDetail> {
 }
 
 export default async function CoursePage({ params }: CoursePageProps) {
+  const { slug } = await params;
   const [courseData, rating] = await Promise.all([
-    getCourseData(params.slug),
-    getCourseRating(params.slug),
+    getCourseData(slug),
+    getCourseRating(slug),
   ]);
 
   return (
-    <CourseDetailComponent course={courseData} rating={rating} slug={params.slug} />
+    <CourseDetailComponent course={courseData} rating={rating} slug={slug} />
   );
 }
 
 export async function generateMetadata({ params }: CoursePageProps) {
-  const courseData = await getCourseData(params.slug);
+  const { slug } = await params;
+  const courseData = await getCourseData(slug);
 
   return {
     title: `${courseData.title} - Curso Online`,

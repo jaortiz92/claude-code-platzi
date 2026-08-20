@@ -36,13 +36,12 @@ plataforma online de cursos, cada cursos tiene clases, descripciones y no hay mu
 ```json
 {
     "id": 1,
-    "name": "Curso de React",
+    "title": "Curso de React",
     "description": "Curso de React",
-    "thumbnail": "https://via.placeholder.com/150", 
+    "thumbnail": "https://via.placeholder.com/150",
     "slug": "curso-de-react",
-    "created_at": "2021-01-01",
-    "updated_at": "2021-01-01",
-    "deleted_at": "2021-01-01",
+    "teacher": "Juan Pérez",
+    "duration": 0,
     "teacher_id": [1, 2, 3]
 }
 ```
@@ -50,15 +49,12 @@ plataforma online de cursos, cada cursos tiene clases, descripciones y no hay mu
 - Clases:
 ```json
 {
-    "id": 1, 
-    "course_id": 1, 
-    "name": "Clase 1",
+    "id": 1,
+    "title": "Clase 1",
     "description": "Clase 1",
     "slug": "clase-1",
-    "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "created_at": "2021-01-01",
-    "updated_at": "2021-01-01",
-    "deleted_at": "2021-01-01"
+    "video": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "duration": 0
 }
 ```
 
@@ -81,10 +77,12 @@ plataforma online de cursos, cada cursos tiene clases, descripciones y no hay mu
 [
     {
         "id": 1,
-        "name": "Curso de React",
+        "title": "Curso de React",
         "description": "Curso de React",
-        "thumbnail": "https://via.placeholder.com/150", 
+        "thumbnail": "https://via.placeholder.com/150",
         "slug": "curso-de-react",
+        "teacher": "Juan Pérez",
+        "duration": 0
     }
 ]
 ```
@@ -93,17 +91,21 @@ plataforma online de cursos, cada cursos tiene clases, descripciones y no hay mu
 ```json
 {
     "id": 1,
-    "name": "Curso de React",
+    "title": "Curso de React",
     "description": "Curso de React",
-    "thumbnail": "https://via.placeholder.com/150", 
+    "thumbnail": "https://via.placeholder.com/150",
     "slug": "curso-de-react",
+    "teacher": "Juan Pérez",
+    "duration": 0,
     "teacher_id": [1, 2, 3],
     "classes": [
         {
             "id": 1,
-            "name": "Clase 1",
+            "title": "Clase 1",
             "description": "Clase 1",
             "slug": "clase-1",
+            "video": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            "duration": 0
         }
     ]
 }
@@ -112,12 +114,10 @@ plataforma online de cursos, cada cursos tiene clases, descripciones y no hay mu
 ```json
 {
     "id": 1,
-    "name": "Clase 1",
+    "title": "Clase 1",
     "description": "Clase 1",
     "slug": "clase-1",
-    "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "created_at": "2021-01-01",
-    "updated_at": "2021-01-01",
-    "deleted_at": "2021-01-01"
+    "video": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "duration": 0
 }
 ```
